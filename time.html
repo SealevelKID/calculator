@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>時間計算機 App版 (教學最小單位版)</title>
+    <title>時間計算機</title>
     <style>
         :root {
             --bg-color: #e0e5ec;
@@ -13,9 +13,10 @@
             --btn-op: #f39c12;
             --btn-unit: #3498db;
             --btn-ac: #e74c3c;
-            --text-dark: #2c3e50;
+            --btn-bracket: #7f8c8d;
+            --text-dark: #111111;
             --text-light: #ffffff;
-            --ans-color: #27ae60;
+            --ans-color: #1e8449;
         }
 
         body {
@@ -46,39 +47,94 @@
             margin-bottom: 15px;
             text-align: right;
             box-shadow: inset 0 5px 10px rgba(0,0,0,0.1);
-            min-height: 160px;
+            min-height: 240px;
             display: flex;
             flex-direction: column;
             justify-content: flex-start;
         }
 
         .history {
-            font-size: 1.1rem;
-            color: #7f8c8d;
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: #34495e;
             min-height: 1.5rem;
             word-wrap: break-word;
-            border-bottom: 1px dashed #bdc3c7;
-            padding-bottom: 5px;
-            margin-bottom: 5px;
+            border-bottom: 2px dashed #bdc3c7;
+            padding-bottom: 10px;
+            margin-bottom: 8px;
+            line-height: 1.8;
+            text-align: left;
         }
 
+        .history-token {
+            display: inline-block;
+            padding: 2px 4px;
+            border-radius: 6px;
+            background: rgba(52, 152, 219, 0.1);
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .history-token:active {
+            background: rgba(52, 152, 219, 0.3);
+        }
+        
+        .current-num-inline {
+            background: rgba(243, 156, 18, 0.2);
+            color: #d35400;
+        }
+
+        .cursor-gap {
+            display: inline-block;
+            min-width: 12px;
+            cursor: pointer;
+            text-align: center;
+        }
+        .blink {
+            color: #e74c3c;
+            font-weight: 900;
+            animation: blinker 1s linear infinite;
+        }
+        @keyframes blinker { 50% { opacity: 0; } }
+
         .process {
-            font-size: 1rem;
-            color: #34495e;
-            white-space: pre-line;
+            font-size: 1.15rem;
+            font-weight: bold;
+            color: #1a252f;
             text-align: left;
             flex-grow: 1;
-            line-height: 1.5;
+            line-height: 1.6;
             font-family: monospace;
+            overflow-y: auto;
+        }
+
+        .process-hint {
+            color: #7f8c8d;
+            font-size: 1rem;
+            font-weight: normal;
+        }
+
+        .clickable-step {
+            color: #3498db;
+            cursor: pointer;
+            text-decoration: underline;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: rgba(52, 152, 219, 0.1);
+            transition: 0.2s;
+            display: inline-block;
+        }
+        .clickable-step:active {
+            background: rgba(52, 152, 219, 0.3);
+            transform: scale(0.95);
         }
 
         .current {
-            font-size: 2.2rem;
-            font-weight: bold;
+            font-size: 3rem;
+            font-weight: 900;
             color: var(--ans-color);
             word-wrap: break-word;
             text-align: right;
-            margin-top: 5px;
+            margin-top: 10px;
         }
 
         .keypad {
@@ -90,7 +146,7 @@
         button {
             border: none;
             border-radius: 10px;
-            font-size: 1.15rem;
+            font-size: 1.6rem;
             font-weight: bold;
             padding: 5px 0;
             min-height: 55px;
@@ -106,10 +162,60 @@
         }
 
         .btn-num { background-color: var(--btn-num); }
-        .btn-unit { background-color: var(--btn-unit); color: var(--text-light); }
-        .btn-op { background-color: var(--btn-op); color: var(--text-light); font-size: 1.4rem; }
-        .btn-ac { background-color: var(--btn-ac); color: var(--text-light); }
+        .btn-unit { background-color: var(--btn-unit); color: var(--text-light); font-size: 1.4rem; }
+        .btn-op { background-color: var(--btn-op); color: var(--text-light); font-size: 1.8rem; }
+        .btn-ac { background-color: var(--btn-ac); color: var(--text-light); font-size: 1.3rem; }
+        .btn-bracket { background-color: var(--btn-bracket); color: var(--text-light); font-size: 1.5rem; }
         .span-2 { grid-column: span 2; }
+
+        /* 彈出視窗樣式 */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(44, 62, 80, 0.8);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            animation: fadeIn 0.2s forwards;
+        }
+        @keyframes fadeIn { to { opacity: 1; } }
+
+        .modal-card {
+            background: white;
+            padding: 20px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 380px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            text-align: left;
+            transform: translateY(20px);
+            animation: slideUp 0.2s forwards;
+        }
+        @keyframes slideUp { to { transform: translateY(0); } }
+
+        .modal-title {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: #c0392b;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #ecf0f1;
+            text-align: center;
+        }
+
+        .btn-cancel { 
+            width: 100%;
+            padding: 12px;
+            margin-top: 15px;
+            border-radius: 10px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            background: #ecf0f1; 
+            color: #34495e; 
+            box-shadow: none;
+        }
     </style>
 </head>
 <body>
@@ -118,7 +224,7 @@
     <div class="screen">
         <div class="history" id="history-screen"></div>
         <div class="process" id="process-screen"></div>
-        <div class="current" id="current-screen" style="color: #2c3e50;">0</div>
+        <div class="current" id="current-screen" style="color: #111111;">0</div>
     </div>
 
     <div class="keypad">
@@ -127,7 +233,8 @@
         <button class="btn-unit" onclick="inputUnit('分', 'm')">分</button>
         <button class="btn-unit" onclick="inputUnit('秒', 's')">秒</button>
 
-        <button class="btn-ac span-2" onclick="clearAll()">AC (清除)</button>
+        <button class="btn-ac" onclick="clearAll()">AC</button>
+        <button class="btn-bracket" onclick="inputSmartBracket()">( )</button>
         <button class="btn-ac" onclick="deleteLast()" style="background-color: #c0392b;">DEL</button>
         <button class="btn-op" onclick="inputOperator('÷')">÷</button>
 
@@ -147,15 +254,21 @@
         <button class="btn-op" onclick="inputOperator('+')">+</button>
 
         <button class="btn-num span-2" onclick="inputDigit('0')">0</button>
-        <button class="btn-op span-2" onclick="calculate()" style="background-color: #27ae60;">= (計算)</button>
+        <button class="btn-op span-2" onclick="calculate()" style="background-color: #27ae60;">=</button>
+    </div>
+</div>
+
+<div class="modal-overlay" id="step-modal">
+    <div class="modal-card">
+        <div class="modal-title">📖 化聚步驟解析</div>
+        <div id="step-content" style="font-size: 1.15rem; line-height: 1.6; color: #2c3e50;"></div>
+        <button class="btn-cancel" onclick="closeStepModal()">關閉視窗</button>
     </div>
 </div>
 
 <script>
     const unitNames = { 'd': '日', 'h': '時', 'm': '分', 's': '秒' };
     const unitHierarchy = { 'd': 4, 'h': 3, 'm': 2, 's': 1 };
-    
-    // 單位換算倍率表：目標單位 -> 來源單位的倍數
     const multipliers = {
         'h': { 'd': 24, 'h': 1 },
         'm': { 'd': 1440, 'h': 60, 'm': 1 },
@@ -165,18 +278,128 @@
 
     let tokens = []; 
     let currentNumber = ""; 
+    let cursorIndex = 0; 
     let isCalculated = false; 
+    let currentStepHtml = ""; // 儲存當前化聚步驟的 HTML
 
     const historyScreen = document.getElementById('history-screen');
     const processScreen = document.getElementById('process-screen');
     const currentScreen = document.getElementById('current-screen');
 
+    function openStepModal() {
+        document.getElementById('step-content').innerHTML = currentStepHtml;
+        document.getElementById('step-modal').style.display = 'flex';
+    }
+
+    function closeStepModal() {
+        document.getElementById('step-modal').style.display = 'none';
+    }
+
     function updateDisplay() {
-        let historyStr = tokens.map(t => t.display).join(" ");
-        historyScreen.innerText = historyStr;
-        processScreen.innerText = ""; 
-        currentScreen.style.color = "#2c3e50"; 
-        currentScreen.innerText = currentNumber || (tokens.length === 0 ? "0" : "");
+        historyScreen.innerHTML = "";
+        
+        for (let i = 0; i <= tokens.length; i++) {
+            let gap = document.createElement('span');
+            gap.className = "cursor-gap";
+            
+            if (i === cursorIndex && !isCalculated) {
+                if (currentNumber !== "") {
+                    let cnSpan = document.createElement('span');
+                    cnSpan.className = "history-token current-num-inline";
+                    cnSpan.innerText = currentNumber;
+                    gap.appendChild(cnSpan);
+                }
+                let curSpan = document.createElement('span');
+                curSpan.className = "blink";
+                curSpan.innerText = "|";
+                gap.appendChild(curSpan);
+            } else {
+                gap.innerHTML = "&nbsp;"; 
+            }
+            
+            gap.onclick = (e) => { 
+                e.stopPropagation(); 
+                if (isCalculated) isCalculated = false;
+                flushCurrentNumber(); 
+                cursorIndex = i; 
+                updateDisplay(); 
+            };
+            historyScreen.appendChild(gap);
+
+            if (i < tokens.length) {
+                let t = tokens[i];
+                let span = document.createElement('span');
+                span.className = "history-token";
+                span.innerText = t.type === 'op' ? ` ${t.display} ` : t.display;
+                
+                span.onclick = (e) => { 
+                    e.stopPropagation(); 
+                    if (isCalculated) isCalculated = false;
+                    flushCurrentNumber(); 
+                    cursorIndex = i + 1; 
+                    updateDisplay(); 
+                };
+                historyScreen.appendChild(span);
+            }
+        }
+
+        if (isCalculated) {
+            let eqSpan = document.createElement('span');
+            eqSpan.innerText = " =";
+            eqSpan.style.color = "#34495e";
+            historyScreen.appendChild(eqSpan);
+        } else {
+            if (tokens.length === 0 && currentNumber === "") {
+                processScreen.innerHTML = "<span class='process-hint'>💡 提示：<br>點擊算式的任何位置可以移動紅色的游標，隨時插入或刪除符號！</span>";
+            } else {
+                processScreen.innerHTML = ""; 
+            }
+            currentScreen.style.color = "#111111"; 
+            currentScreen.innerText = currentNumber || (tokens.length === 0 ? "0" : "");
+        }
+    }
+
+    function normalizeTokens() {
+        let merged = [];
+        let newCursor = cursorIndex;
+
+        for (let i = 0; i < tokens.length; i++) {
+            let t = tokens[i];
+            if (merged.length > 0) {
+                let prev = merged[merged.length - 1];
+                
+                if (prev.type === 'num' && t.type === 'num') {
+                    let mergedStr = prev.display + t.display;
+                    prev.val = parseFloat(mergedStr);
+                    prev.display = mergedStr;
+                    if (cursorIndex > i) newCursor--;
+                    continue;
+                }
+                
+                if (prev.type === 'num' && t.type === 'time') {
+                    let mergedStr = prev.display + t.val.toString();
+                    let newTimeToken = { ...t };
+                    newTimeToken.val = parseInt(mergedStr);
+                    newTimeToken.display = mergedStr + t.unit;
+                    merged.pop();
+                    merged.push(newTimeToken);
+                    if (cursorIndex > i) newCursor--;
+                    continue;
+                }
+            }
+            merged.push({ ...t });
+        }
+        tokens = merged;
+        cursorIndex = newCursor;
+    }
+
+    function flushCurrentNumber() {
+        if (currentNumber !== "") {
+            tokens.splice(cursorIndex, 0, { type: 'num', val: parseFloat(currentNumber), display: currentNumber });
+            cursorIndex++;
+            currentNumber = "";
+            normalizeTokens();
+        }
     }
 
     function inputDigit(digit) {
@@ -188,41 +411,98 @@
     }
 
     function inputUnit(unitName, unitKey) {
-        if (isCalculated) isCalculated = false;
-        if (currentNumber === "") return; 
+        if (isCalculated) {
+            isCalculated = false;
+            cursorIndex = tokens.length;
+        }
+        
+        // ★ 修復核心：如果目前沒有正在輸入的數字
+        if (currentNumber === "") {
+            // 檢查游標前面是不是一個已經固定下來的「純數字」
+            if (cursorIndex > 0 && tokens[cursorIndex - 1].type === 'num') {
+                // 如果是，直接把這個純數字轉換成時間單位
+                tokens[cursorIndex - 1].type = 'time';
+                tokens[cursorIndex - 1].unit = unitName;
+                tokens[cursorIndex - 1].key = unitKey;
+                tokens[cursorIndex - 1].display = tokens[cursorIndex - 1].val + unitName;
+                normalizeTokens(); 
+                updateDisplay();
+            }
+            return; 
+        }
 
-        tokens.push({ type: 'time', val: parseInt(currentNumber), unit: unitName, key: unitKey, display: currentNumber + unitName });
+        tokens.splice(cursorIndex, 0, { type: 'time', val: parseInt(currentNumber), unit: unitName, key: unitKey, display: currentNumber + unitName });
+        cursorIndex++;
         currentNumber = "";
+        normalizeTokens(); 
+        updateDisplay();
+    }
+
+    function inputSmartBracket() {
+        if (isCalculated) {
+            isCalculated = false;
+            cursorIndex = tokens.length;
+        }
+        flushCurrentNumber();
+
+        let leftSideTokens = tokens.slice(0, cursorIndex);
+        let openCount = leftSideTokens.filter(t => t.val === '(').length;
+        let closeCount = leftSideTokens.filter(t => t.val === ')').length;
+        let lastToken = leftSideTokens.length > 0 ? leftSideTokens[leftSideTokens.length - 1] : null;
+
+        let shouldClose = false;
+        if (openCount > closeCount) {
+            if (lastToken && (lastToken.type === 'time' || lastToken.type === 'num' || lastToken.val === ')')) {
+                shouldClose = true;
+            }
+        }
+
+        if (shouldClose) {
+            tokens.splice(cursorIndex, 0, { type: 'bracket', val: ')', display: ')' });
+            cursorIndex++;
+        } else {
+            if (lastToken && (lastToken.type === 'time' || lastToken.type === 'num' || lastToken.val === ')')) {
+                tokens.splice(cursorIndex, 0, { type: 'op', val: '×', display: '×' });
+                cursorIndex++;
+            }
+            tokens.splice(cursorIndex, 0, { type: 'bracket', val: '(', display: '(' });
+            cursorIndex++;
+        }
         updateDisplay();
     }
 
     function inputOperator(op) {
-        if (isCalculated) isCalculated = false;
+        if (isCalculated) {
+            isCalculated = false;
+            cursorIndex = tokens.length;
+        }
+        flushCurrentNumber();
 
-        if (currentNumber !== "" && tokens.length === 0) {
-            alert("請先為數字選擇時間單位 (日/時/分/秒)！");
-            return;
-        }
-        
-        if (tokens.length > 0 && tokens[tokens.length - 1].type === 'op' && currentNumber === "") {
-            tokens[tokens.length - 1] = { type: 'op', val: op, display: op };
-        } else {
-            if (currentNumber !== "") {
-                tokens.push({ type: 'num', val: parseFloat(currentNumber), display: currentNumber });
-                currentNumber = "";
+        if (cursorIndex > 0) {
+            let last = tokens[cursorIndex - 1];
+            if (last.type === 'op') {
+                tokens[cursorIndex - 1] = { type: 'op', val: op, display: op };
+                updateDisplay();
+                return;
             }
-            tokens.push({ type: 'op', val: op, display: op });
         }
+        tokens.splice(cursorIndex, 0, { type: 'op', val: op, display: op });
+        cursorIndex++;
         updateDisplay();
     }
 
     function deleteLast() {
-        if (isCalculated) { clearAll(); return; }
+        if (isCalculated) {
+            isCalculated = false;
+            cursorIndex = tokens.length; 
+        }
         
         if (currentNumber !== "") {
             currentNumber = currentNumber.slice(0, -1);
-        } else if (tokens.length > 0) {
-            tokens.pop();
+        } else if (cursorIndex > 0) {
+            tokens.splice(cursorIndex - 1, 1);
+            cursorIndex--;
+            normalizeTokens(); 
         }
         updateDisplay();
     }
@@ -230,163 +510,335 @@
     function clearAll() {
         tokens = [];
         currentNumber = "";
+        cursorIndex = 0;
         isCalculated = false;
-        processScreen.innerText = "";
-        currentScreen.style.color = "#2c3e50";
         updateDisplay();
-        currentScreen.innerText = "0";
     }
 
-    // 取得算式中最小的單位
     function getMinUnitKey(tokenArr) {
         let minLevel = 4;
-        let minKey = 'd';
+        let minKey = 's'; 
+        let foundTime = false;
         tokenArr.forEach(t => {
-            if (t.type === 'time' && unitHierarchy[t.key] < minLevel) {
-                minLevel = unitHierarchy[t.key];
-                minKey = t.key;
-            }
-        });
-        return minKey;
-    }
-
-    // 將時間轉換為指定最小單位，並產生教學用的算式字串
-    function buildConversion(tokenArr, minUnitKey) {
-        let total = 0;
-        let exprParts = [];
-        
-        tokenArr.forEach(t => {
-            if(t.type === 'time') {
-                let mul = multipliers[minUnitKey][t.key];
-                let convertedVal = t.val * mul;
-                total += convertedVal;
-                
-                if(mul > 1) {
-                    exprParts.push(`${mul}×${t.val}`);
-                } else {
-                    if (t.val > 0 || tokenArr.length === 1) {
-                        exprParts.push(`${t.val}`);
-                    }
+            if (t.type === 'time') {
+                foundTime = true;
+                if (unitHierarchy[t.key] < minLevel) {
+                    minLevel = unitHierarchy[t.key];
+                    minKey = t.key;
                 }
             }
         });
+        return foundTime ? minKey : 's';
+    }
 
-        let targetUnitName = unitNames[minUnitKey];
-        let originalStr = tokenArr.map(t => t.display).join("");
+    function evaluateExpression(exprTokens) {
+        let output = [];
+        let opStack = [];
+        const precedence = { '+': 1, '-': 1, '×': 2, '÷': 2 };
 
-        if (exprParts.length === 0) exprParts.push("0");
-
-        // 如果只有一個單位且已經是最小單位，不顯示冗長的換算
-        if (tokenArr.length === 1 && tokenArr[0].key === minUnitKey) {
-            return { total: total, str: `${originalStr}` }; 
+        for (let t of exprTokens) {
+            if (t.type === 'val') {
+                output.push(t);
+            } else if (t.val === '(') {
+                opStack.push(t);
+            } else if (t.val === ')') {
+                while (opStack.length > 0 && opStack[opStack.length - 1].val !== '(') {
+                    output.push(opStack.pop());
+                }
+                if (opStack.length === 0) throw "括號數量不匹配，請檢查算式";
+                opStack.pop(); 
+            } else if (t.type === 'op') {
+                while (opStack.length > 0 && opStack[opStack.length - 1].val !== '(' &&
+                       precedence[opStack[opStack.length - 1].val] >= precedence[t.val]) {
+                    output.push(opStack.pop());
+                }
+                opStack.push(t);
+            }
+        }
+        while (opStack.length > 0) {
+            let op = opStack.pop();
+            if (op.val === '(') throw "括號數量不匹配，請檢查算式";
+            output.push(op);
         }
 
-        let exprStr = exprParts.join(" + ");
-        return { total: total, str: `${originalStr} = ${exprStr} = ${total}${targetUnitName}` };
+        let evalStack = [];
+        for (let t of output) {
+            if (t.type === 'val') {
+                evalStack.push(t);
+            } else if (t.type === 'op') {
+                if (evalStack.length < 2) throw "算式不完整，請檢查運算符號前後是否有數字";
+                let b = evalStack.pop();
+                let a = evalStack.pop();
+                let res = { type: 'val', val: 0, dim: 0 }; 
+
+                if (t.val === '+') {
+                    if (a.dim !== b.dim) throw "加法必須單位相同 (時間+時間)";
+                    res.val = a.val + b.val;
+                    res.dim = a.dim;
+                } else if (t.val === '-') {
+                    if (a.dim !== b.dim) throw "減法必須單位相同 (時間-時間)";
+                    res.val = a.val - b.val;
+                    res.dim = a.dim;
+                } else if (t.val === '×') {
+                    if (a.dim === 1 && b.dim === 1) throw "時間不能乘時間，請乘純數字倍數";
+                    res.val = a.val * b.val;
+                    res.dim = a.dim + b.dim; 
+                } else if (t.val === '÷') {
+                    if (b.val === 0) throw "除數不能為零！";
+                    if (a.dim === 0 && b.dim === 1) throw "純數字不能除以時間";
+                    res.val = a.val / b.val;
+                    res.dim = a.dim - b.dim; 
+                }
+                evalStack.push(res);
+            }
+        }
+
+        if (evalStack.length !== 1) throw "無法解析算式，請確認邏輯";
+        return evalStack[0];
+    }
+
+    // ★ 核心教學模組：產生化聚步驟的 HTML
+    function buildPedagogicalSteps(totalValue, minUnitKey) {
+        let uName = unitNames[minUnitKey];
+        let val = Math.round(totalValue * 100000) / 100000;
+        
+        let html = `運算結果：<b>${val} ${uName}</b><br><hr style="border:0; border-top:1px dashed #ccc; margin:10px 0;">`;
+
+        let intVal = Math.floor(val);
+        let fracVal = Math.round((val - intVal) * 100000) / 100000;
+        let finalD = 0, finalH = 0, finalM = 0, finalS = 0;
+
+        // 1. 處理整數部分 (除法升級)
+        if (intVal > 0) {
+            html += `<b>• 處理整數部分 (${intVal} ${uName})：</b><br>`;
+            let currentInt = intVal;
+            let currentUnit = minUnitKey;
+
+            if (currentUnit === 's') {
+                if (currentInt >= 60) {
+                    let r = currentInt % 60;
+                    let q = Math.floor(currentInt / 60);
+                    html += `&nbsp;&nbsp;${currentInt} 秒 ÷ 60 = ${q} 分 ... ${r} 秒<br>`;
+                    finalS = r; currentInt = q; currentUnit = 'm';
+                } else { finalS = currentInt; currentInt = 0; }
+            }
+            if (currentUnit === 'm' && currentInt > 0) {
+                if (currentInt >= 60) {
+                    let r = currentInt % 60;
+                    let q = Math.floor(currentInt / 60);
+                    html += `&nbsp;&nbsp;${currentInt} 分 ÷ 60 = ${q} 時 ... ${r} 分<br>`;
+                    finalM = r; currentInt = q; currentUnit = 'h';
+                } else { finalM = currentInt; currentInt = 0; }
+            }
+            if (currentUnit === 'h' && currentInt > 0) {
+                if (currentInt >= 24) {
+                    let r = currentInt % 24;
+                    let q = Math.floor(currentInt / 24);
+                    html += `&nbsp;&nbsp;${currentInt} 時 ÷ 24 = ${q} 日 ... ${r} 時<br>`;
+                    finalH = r; finalD = q; currentInt = 0;
+                } else { finalH = currentInt; currentInt = 0; }
+            }
+            if (currentUnit === 'd' && currentInt > 0) {
+                finalD = currentInt;
+            }
+        }
+
+        // 2. 處理小數部分 (乘法降級)
+        if (fracVal > 0) {
+            if (intVal > 0) html += `<br>`;
+            html += `<b>• 處理小數部分 (${fracVal} ${uName})：</b><br>`;
+            let currentFrac = fracVal;
+            let currentUnit = minUnitKey;
+
+            if (currentUnit === 'd') {
+                let nextVal = currentFrac * 24;
+                html += `&nbsp;&nbsp;${currentFrac} 日 × 24 = ${nextVal} 時<br>`;
+                finalH += Math.floor(nextVal);
+                currentFrac = nextVal - Math.floor(nextVal);
+                currentUnit = 'h';
+            }
+            if (currentUnit === 'h' && currentFrac > 0) {
+                let nextVal = currentFrac * 60;
+                html += `&nbsp;&nbsp;${currentFrac} 時 × 60 = ${nextVal} 分<br>`;
+                finalM += Math.floor(nextVal);
+                currentFrac = nextVal - Math.floor(nextVal);
+                currentUnit = 'm';
+            }
+            if (currentUnit === 'm' && currentFrac > 0) {
+                let nextVal = currentFrac * 60;
+                html += `&nbsp;&nbsp;${currentFrac} 分 × 60 = ${nextVal} 秒<br>`;
+                finalS += Math.round(nextVal);
+            }
+        }
+
+        html += `<hr style="border:0; border-top:1px dashed #ccc; margin:10px 0;">`;
+        html += `<b>➔ 最終化聚結果：</b><br>`;
+        let resultParts = [];
+        if (finalD > 0) resultParts.push(`${finalD}日`);
+        if (finalH > 0 || finalD > 0) resultParts.push(`${finalH}時`);
+        if (finalM > 0 || finalH > 0 || finalD > 0) resultParts.push(`${finalM}分`);
+        if (finalS > 0 || resultParts.length === 0) resultParts.push(`${finalS}秒`);
+        
+        html += `&nbsp;&nbsp;<span style="color:#27ae60; font-size:1.3rem; font-weight:bold;">${resultParts.join(' ')}</span>`;
+        return html;
     }
 
     function calculate() {
-        if (tokens.length === 0 && currentNumber === "") return;
+        flushCurrentNumber();
+        if (tokens.length === 0) return;
 
-        if (currentNumber !== "") {
-            tokens.push({ type: 'num', val: parseFloat(currentNumber), display: currentNumber });
-            currentNumber = "";
-        }
-
-        let opIndex = tokens.findIndex(t => t.type === 'op');
-        let minUnitKey = getMinUnitKey(tokens);
-        let uName = unitNames[minUnitKey];
-
-        let resultStr = "";
-        let processStr = "";
-
-        if (opIndex === -1) {
-            // 單純化聚
-            let conv = buildConversion(tokens, minUnitKey);
-            processStr = `① 總計換算：\n   • ${conv.str}\n② 重新化聚：`;
-            showResult(formatFromUnit(conv.total, minUnitKey), processStr, tokens);
-            return;
-        }
-
-        let leftTokens = tokens.slice(0, opIndex);
-        let rightTokens = tokens.slice(opIndex + 1);
-        let operator = tokens[opIndex].val;
-
-        let convA = buildConversion(leftTokens, minUnitKey);
-        let valA = convA.total;
-        
-        let valB = 0;
-        let numB = 0;
-        let convB = null;
-        let rightIsTime = rightTokens.some(t => t.type === 'time');
-
-        if (rightIsTime) {
-            convB = buildConversion(rightTokens, minUnitKey);
-            valB = convB.total;
-        } else {
-            if (rightTokens.length === 1 && rightTokens[0].type === 'num') {
-                numB = rightTokens[0].val;
-            } else {
-                alert("運算式有誤，請檢查"); return;
-            }
+        let openCount = tokens.filter(t => t.val === '(').length;
+        let closeCount = tokens.filter(t => t.val === ')').length;
+        while (openCount > closeCount) {
+            tokens.push({ type: 'bracket', val: ')', display: ')' });
+            closeCount++;
+            cursorIndex++;
         }
 
         try {
-            processStr = `① 換算為最小單位 (${uName})：\n   • ${convA.str}\n`;
-            if (rightIsTime && convB.str !== convA.str) {
-                processStr += `   • ${convB.str}\n`;
-            }
+            let minUnitKey = getMinUnitKey(tokens);
+            let uName = unitNames[minUnitKey];
 
-            if (operator === '+') {
-                if (!rightIsTime) throw "加法必須是「時間 + 時間」";
-                processStr += `② 運算：${valA}${uName} + ${valB}${uName} = ${valA + valB}${uName}\n③ 化聚：`;
-                resultStr = formatFromUnit(valA + valB, minUnitKey);
-            } 
-            else if (operator === '-') {
-                if (!rightIsTime) throw "減法必須是「時間 - 時間」";
-                if (valA < valB) throw "結果不能為負數";
-                processStr += `② 運算：${valA}${uName} - ${valB}${uName} = ${valA - valB}${uName}\n③ 化聚：`;
-                resultStr = formatFromUnit(valA - valB, minUnitKey);
-            } 
-            else if (operator === '×') {
-                if (rightIsTime) throw "乘法必須是「時間 × 倍數」";
-                processStr += `② 運算：${valA}${uName} × ${numB} = ${valA * numB}${uName}\n③ 化聚：`;
-                resultStr = formatFromUnit(valA * numB, minUnitKey);
-            } 
-            else if (operator === '÷') {
-                if (rightIsTime) {
-                    if (valB === 0) throw "除數不能為零";
-                    let multiple = valA / valB;
-                    processStr += `② 運算：${valA}${uName} ÷ ${valB}${uName}\n③ 計算倍數：`;
-                    resultStr = (multiple % 1 === 0 ? multiple : multiple.toFixed(2)) + " (倍)";
-                } else {
-                    if (numB === 0) throw "除數不能為零";
-                    processStr += `② 運算：${valA}${uName} ÷ ${numB} = ${valA / numB}${uName}\n③ 化聚：`;
-                    resultStr = formatFromUnit(valA / numB, minUnitKey);
+            let processStr = "";
+            let conversions = [];
+            let exprTokens = [];
+            let mathDisplayArr = []; 
+            
+            let groupedTokens = [];
+            for (let i = 0; i < tokens.length; i++) {
+                let t = tokens[i];
+                let isTime = t.type === 'time';
+                let prevIsTime = i > 0 && tokens[i - 1].type === 'time';
+                let nextIsTime = i < tokens.length - 1 && tokens[i + 1].type === 'time';
+
+                if (isTime && nextIsTime && !prevIsTime) {
+                    groupedTokens.push({ type: 'bracket', val: '(', display: '(' });
+                }
+
+                if (i > 0) {
+                    let prev = tokens[i - 1];
+                    if (prev.type === 'time' && t.type === 'time') {
+                        groupedTokens.push({ type: 'op', val: '+', display: '+' });
+                    } 
+                    else if (
+                        (prev.type === 'num' || prev.type === 'time' || prev.val === ')') &&
+                        (t.type === 'num' || t.type === 'time' || t.val === '(')
+                    ) {
+                        groupedTokens.push({ type: 'op', val: '×', display: '×' });
+                    }
+                }
+
+                groupedTokens.push(t);
+
+                if (isTime && prevIsTime && !nextIsTime) {
+                    groupedTokens.push({ type: 'bracket', val: ')', display: ')' });
                 }
             }
-            
-            showResult(resultStr, processStr, tokens);
+
+            for (let i = 0; i < groupedTokens.length; i++) {
+                let t = groupedTokens[i];
+
+                if (t.type === 'time') {
+                    let mul = multipliers[minUnitKey][t.key];
+                    let valInMin = t.val * mul;
+                    exprTokens.push({ type: 'val', val: valInMin, dim: 1, display: valInMin.toString() });
+                    mathDisplayArr.push(valInMin);
+                    
+                    if (mul > 1) {
+                        conversions.push(`&nbsp;&nbsp;• ${t.display} = ${mul}×${t.val} = ${valInMin}${uName}`);
+                    }
+                } else if (t.type === 'num') {
+                    exprTokens.push({ type: 'val', val: t.val, dim: 0, display: t.display });
+                    mathDisplayArr.push(t.display);
+                } else {
+                    exprTokens.push(t);
+                    mathDisplayArr.push(t.display);
+                }
+            }
+
+            // 使用 HTML 的 <br> 取代 \n 以支援 innerHTML 渲染
+            if (conversions.length > 0) {
+                let uniqueConvs = [...new Set(conversions)];
+                processStr += `① 換算為最小單位 (${uName})：<br>${uniqueConvs.join('<br>')}<br>`;
+            } else {
+                processStr += `① 已是最小單位，無須額外換算<br>`;
+            }
+
+            let result = evaluateExpression(exprTokens);
+
+            let hasOperator = groupedTokens.some(t => t.type === 'op');
+            let formattedResVal = Math.round(result.val * 100000) / 100000;
+
+            // ★ 新增：計算對應單位的帶分數
+            let fractionStr = "";
+            if (result.dim === 1 && formattedResVal % 1 !== 0) {
+                let intPart = Math.floor(formattedResVal); // 取出整數部分
+                let decPart = formattedResVal - intPart;   // 取出小數部分
+                
+                // 智慧判斷分母：日(24)、時或分(60)、秒預設為(10)
+                let den = 60; 
+                if (minUnitKey === 'd') den = 24;
+                else if (minUnitKey === 's') den = 10;
+                
+                let num = Math.round(decPart * den);       // 分子 = 小數 × 分母
+                
+                // 避免因極微小誤差出現 60/60 這種奇怪的分數
+                if (num > 0 && num < den) {
+                    let intStr = intPart > 0 ? intPart + '又 ' : '';
+                    fractionStr = ` ( ${intStr}${num}/${den} )`;
+                }
+            }
+
+            if (hasOperator) {
+                // 在原本的數字後方，無縫接上分數字串 fractionStr
+                processStr += `② 數學運算：<br>&nbsp;&nbsp;• ${mathDisplayArr.join(' ')}<br>&nbsp;&nbsp;= ${formattedResVal}${fractionStr}`;
+            } else {
+                processStr += `② 數學運算：無<br>`;
+            }
+
+            let resultStr = "";
+            if (result.val < 0) throw "時間計算結果不能為負數";
+
+            if (result.dim === 1) {
+                 // 產生並儲存化聚步驟的 HTML
+                 currentStepHtml = buildPedagogicalSteps(result.val, minUnitKey);
+                 
+                 processStr += hasOperator ? ` ${uName}<br>③ 重新化聚 ` : `③ 重新化聚 `;
+                 processStr += `<span class="clickable-step" onclick="openStepModal()">[🔍查看步驟]</span>：`;
+                 resultStr = formatFromUnit(result.val, minUnitKey);
+            } else if (result.dim === 0) {
+                 processStr += ` (純數字/倍數)<br>`;
+                 resultStr = formattedResVal + " (倍)";
+            } else {
+                 throw "單位運算異常，請檢查是否乘錯了單位";
+            }
+
+            showResult(resultStr, processStr);
 
         } catch (error) {
-            alert(error);
-            let lastToken = tokens.pop();
-            if(lastToken.type === 'num') currentNumber = lastToken.val.toString();
+            if (typeof error === 'string') {
+                alert(error);
+            } else {
+                alert("算式格式有誤，請檢查是否有連按符號或漏打數字！");
+                console.error(error);
+            }
             updateDisplay();
         }
     }
 
-    function showResult(result, processText, historyTokens) {
-        historyScreen.innerText = historyTokens.map(t => t.display).join(" ") + " =";
-        processScreen.innerText = processText;
+    function showResult(result, processText) {
+        isCalculated = true;
+        cursorIndex = tokens.length; 
+        currentNumber = "";
+        
+        updateDisplay();
+        
+        // 這裡改為 innerHTML 讓按鈕和斷行可以被正確解析
+        processScreen.innerHTML = processText;
         currentScreen.style.color = "var(--ans-color)"; 
         currentScreen.innerText = result;
-        tokens = [];
-        currentNumber = "";
-        isCalculated = true;
     }
 
-    // 將單一數值從最小單位轉換回標準的 日/時/分/秒 格式
     function formatFromUnit(totalValue, fromUnitKey) {
         if (totalValue === 0) return "0" + unitNames[fromUnitKey];
         
@@ -396,7 +848,6 @@
         if (fromUnitKey === 'm') totalSeconds = totalValue * 60;
         if (fromUnitKey === 's') totalSeconds = totalValue;
 
-        // 處理浮點數除法可能產生的微小誤差
         totalSeconds = Math.round(totalSeconds * 1000) / 1000;
 
         let d = Math.floor(totalSeconds / 86400);
@@ -412,6 +863,8 @@
         
         return result.trim();
     }
+
+    updateDisplay();
 </script>
 
 </body>
