@@ -51,6 +51,7 @@
             display: flex;
             flex-direction: column;
             justify-content: flex-start;
+            container-type: inline-size; /* ★ 新增這行：讓螢幕變成可偵測寬度的動態容器 */
         }
 
         .history {
@@ -68,7 +69,7 @@
 
         .history-token {
             display: inline-block;
-            padding: 2px 4px;
+            padding: 2px 1px;  /* 縮小左右內邊距 */
             border-radius: 6px;
             background: rgba(52, 152, 219, 0.1);
             cursor: pointer;
@@ -85,7 +86,7 @@
 
         .cursor-gap {
             display: inline-block;
-            min-width: 12px;
+            min-width: 5px; /* 縮小游標間距，讓括號和數字靠攏 */
             cursor: pointer;
             text-align: center;
         }
@@ -129,10 +130,10 @@
         }
 
         .current {
-            font-size: 3rem;
+            font-size: min(3rem, 11cqi); /* ★ 修改：字體最大 3rem，若太長則自動縮小適應寬度 */
             font-weight: 900;
             color: var(--ans-color);
-            word-wrap: break-word;
+            white-space: nowrap;         /* ★ 修改：取代原本的 word-wrap，強制文字絕對不換行 */
             text-align: right;
             margin-top: 10px;
         }
@@ -752,7 +753,12 @@
                     mathDisplayArr.push(t.display);
                 } else {
                     exprTokens.push(t);
-                    mathDisplayArr.push(t.display);
+                    // ★ 讓括號緊貼數字，只有運算符號前後加空白
+                    if (t.type === 'op') {
+                        mathDisplayArr.push(` ${t.display} `); 
+                    } else {
+                        mathDisplayArr.push(t.display); 
+                    }
                 }
             }
 
@@ -798,7 +804,7 @@
 
             if (hasOperator) {
                 // 在原本的數字後方，無縫接上分數字串 fractionStr
-                processStr += `② 數學運算：<br>&nbsp;&nbsp;• ${mathDisplayArr.join(' ')}<br>&nbsp;&nbsp;= ${formattedResVal}${fractionStr}`;
+                processStr += `② 數學運算：<br>&nbsp;&nbsp;• ${mathDisplayArr.join('')}<br>&nbsp;&nbsp;= ${formattedResVal}${fractionStr}`;
             } else {
                 processStr += `② 數學運算：無<br>`;
             }
