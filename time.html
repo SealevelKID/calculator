@@ -784,8 +784,15 @@
                 
                 // 避免因極微小誤差出現 60/60 這種奇怪的分數
                 if (num > 0 && num < den) {
-                    let intStr = intPart > 0 ? intPart + '又 ' : '';
-                    fractionStr = ` ( ${intStr}${num}/${den} )`;
+                    // 拿掉「又」，改用一小段空白間距 (margin-left) 將整數與分數稍微隔開
+                    let intStr = intPart > 0 ? intPart + '<span style="margin-left: 6px;"></span>' : '';
+                    
+                    // 使用 HTML 與 CSS 排版畫出「真實直式分數」
+                    fractionStr = ` ( ${intStr}<span style="display: inline-block; vertical-align: middle; text-align: center; font-size: 0.85em; line-height: 1.2;">
+                        <span style="display: block;">${num}</span>
+                        <span style="display: block; border-top: 1.5px solid currentColor; margin: 1px 0;"></span>
+                        <span style="display: block;">${den}</span>
+                    </span> )`;
                 }
             }
 
