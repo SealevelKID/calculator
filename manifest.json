@@ -1,0 +1,16 @@
+{
+  "name": "時間計算機",
+  "short_name": "時間計算",
+  "start_url": "./time.html",
+  "display": "standalone",
+  "background_color": "#e0e5ec",
+  "theme_color": "#2c3e50",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
